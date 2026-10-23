@@ -167,6 +167,12 @@
   border: 1px solid rgba(251, 191, 36, 0.3);
 }
 
+.pill--neutral {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
 .exam-topbar-meta {
   display: flex;
   align-items: center;
@@ -766,20 +772,54 @@
 
 .exam-submitted-integrity-summary {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.5rem;
   width: 100%;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
   font-size: 0.8rem;
   color: var(--color-text-secondary);
+}
+
+.exam-integrity-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .exam-integrity-summary-count {
   font-weight: 700;
   color: var(--color-text-primary);
+}
+
+.exam-integrity-breakdown {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.breakdown-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+.breakdown-tag--warning {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.breakdown-tag--info {
+  background: rgba(108, 99, 255, 0.1);
+  color: var(--color-accent);
+  border: 1px solid rgba(108, 99, 255, 0.25);
 }
 
 .exam-submitted-notice {

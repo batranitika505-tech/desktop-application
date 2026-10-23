@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { questions } from '../data/questions.js';
+import {
+  useIntegrityEvents,
+  EVENT_TYPES,
+} from '../integrity/integrityEventEngine.js';
 import './ExamScreen.css';
 
 const SESSION_STORAGE_KEY = 'newton-athena-exam-session';
@@ -75,14 +79,20 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     return Math.max(0, Math.ceil((deadlineAt - Date.now()) / 1000));
   });
 
-  // ── Milestone 8: Fullscreen & Window Focus State ──────────────────────────
+  // ── Fullscreen & Window Focus State ───────────────────────────────────────
   const [isFullscreenActive, setIsFullscreenActive] = useState(
     typeof document !== 'undefined' ? !!document.fullscreenElement : false
   );
   const [isWindowFocused, setIsWindowFocused] = useState(
     typeof document !== 'undefined' ? document.hasFocus() : true
   );
-  const [integrityEvents, setIntegrityEvents] = useState([]);
+
+  // Centralized Integrity Event Engine Hook
+  const {
+    events: integrityEvents,
+    recordEvent: recordIntegrityEvent,
+    counts: integrityCounts,
+  } = useIntegrityEvents();
 
   // Refs for stable event listener callbacks without stale closures
   const wasFullscreenActiveRef = useRef(false);
@@ -101,17 +111,6 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
   ).length;
   const unansweredCount = totalQuestions - answeredCount;
   const progressPercent = Math.round(((currentIndex + 1) / totalQuestions) * 100);
-
-  // Record an integrity event with real timestamp and unique ID
-  const recordIntegrityEvent = useCallback((type, severity = 'warning') => {
-    const event = {
-      id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      type,
-      timestamp: new Date().toISOString(),
-      severity,
-    };
-    setIntegrityEvents((prev) => [...prev, event]);
-  }, []);
 
   // Single safe submission handler
   const submitExam = useCallback((reason = 'manual') => {
@@ -179,7 +178,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     try {
       if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(() => {
-          // Failure on initial mount (e.g. platform policy) is not counted as cheating
+          // Failure on initial mount is not counted as cheating
         });
       }
     } catch (_) {}
@@ -193,10 +192,8 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
         isFullscreenActiveRef.current = true;
 
         if (wasFullscreenActiveRef.current) {
-          // Restored after previously exiting
-          recordIntegrityEvent('FULLSCREEN_RESTORED', 'info');
+          recordIntegrityEvent(EVENT_TYPES.FULLSCREEN_RESTORED);
         } else {
-          // Marked active for the first time
           wasFullscreenActiveRef.current = true;
         }
       } else {
@@ -205,7 +202,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
 
         // Only record exit event if fullscreen was previously active
         if (wasFullscreenActiveRef.current) {
-          recordIntegrityEvent('FULLSCREEN_EXIT', 'warning');
+          recordIntegrityEvent(EVENT_TYPES.FULLSCREEN_EXIT);
         }
       }
     };
@@ -215,7 +212,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
       if (!isWindowFocusedRef.current) return; // Prevent duplicate blurs
       isWindowFocusedRef.current = false;
       setIsWindowFocused(false);
-      recordIntegrityEvent('WINDOW_BLUR', 'warning');
+      recordIntegrityEvent(EVENT_TYPES.WINDOW_BLUR);
     };
 
     const handleFocus = () => {
@@ -223,7 +220,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
       if (isWindowFocusedRef.current) return; // Prevent duplicate focuses
       isWindowFocusedRef.current = true;
       setIsWindowFocused(true);
-      recordIntegrityEvent('WINDOW_FOCUS', 'info');
+      recordIntegrityEvent(EVENT_TYPES.WINDOW_FOCUS);
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -333,12 +330,25 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
 
           {/* Environment Integrity Summary */}
           <div className="exam-submitted-integrity-summary">
-            <span className="exam-integrity-summary-label">
-              Environment integrity events recorded:
-            </span>
-            <span className="exam-integrity-summary-count">
-              {integrityEvents.length}
-            </span>
+            <div className="exam-integrity-summary-row">
+              <span className="exam-integrity-summary-label">
+                Environment integrity events recorded:
+              </span>
+              <span className="exam-integrity-summary-count">
+                {integrityCounts.total}
+              </span>
+            </div>
+
+            {integrityCounts.total > 0 && (
+              <div className="exam-integrity-breakdown">
+                <span className="breakdown-tag breakdown-tag--warning">
+                  Warnings: {integrityCounts.warnings}
+                </span>
+                <span className="breakdown-tag breakdown-tag--info">
+                  Informational: {integrityCounts.info}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="exam-submitted-notice">
@@ -401,6 +411,9 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
             id="fullscreen-status-pill"
           >
             Fullscreen: {isFullscreenActive ? 'Active' : 'Exited'}
+          </span>
+          <span className="exam-pill-badge pill--neutral" id="events-count-pill">
+            Events: {integrityCounts.total}
           </span>
         </div>
 
