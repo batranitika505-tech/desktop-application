@@ -1,0 +1,130 @@
+/* ── MonitoringTestScreen Styles ── */
+
+.mon-test {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1.5rem;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(108, 99, 255, 0.08) 0%, transparent 60%),
+    var(--color-bg);
+}
+
+.mon-test-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  max-width: 680px;
+  width: 100%;
+}
+
+/* ── Header ── */
+
+.mon-test-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mon-test-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(108, 99, 255, 0.12);
+  color: var(--color-accent);
+  border: 1px solid rgba(108, 99, 255, 0.25);
+  padding: 0.25rem 0.65rem;
+  border-radius: 100px;
+  margin-bottom: 0.25rem;
+}
+
+.mon-test-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.mon-test-subtitle {
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+}
+
+/* ── Main Area ── */
+
+.mon-test-main {
+  width: 100%;
+}
+
+/* ── Status Panel ── */
+
+.mon-test-status-panel {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: var(--radius);
+  padding: 0.875rem 1.25rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.mon-test-status-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+}
+
+.mon-test-status-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.mon-test-status--active {
+  color: var(--color-success);
+}
+
+.mon-test-status--stopped {
+  color: var(--color-text-secondary);
+}
+
+.mon-test-status--warn {
+  color: #fbbf24;
+}
+
+.mon-test-status--error {
+  color: #f87171;
+}
+
+.mon-test-status--pending {
+  color: var(--color-accent);
+}
+
+/* ── Actions ── */
+
+.mon-test-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.btn-danger-action {
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #f87171;
+}
+
+.btn-danger-action:hover {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: #f87171;
+}
