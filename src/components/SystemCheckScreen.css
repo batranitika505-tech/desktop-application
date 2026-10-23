@@ -1,0 +1,106 @@
+/* ── System Check Screen ── */
+
+.syscheck {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(108, 99, 255, 0.08) 0%, transparent 60%),
+    var(--color-bg);
+}
+
+.syscheck-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  max-width: 520px;
+  width: 100%;
+}
+
+/* ── Header ── */
+
+.syscheck-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.syscheck-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.syscheck-description {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  max-width: 420px;
+}
+
+/* ── Check List ── */
+
+.syscheck-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.syscheck-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+}
+
+.syscheck-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.syscheck-item-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.syscheck-item-sublabel {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+}
+
+/* ── Status Badges ── */
+
+.syscheck-item-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.syscheck-item-status--pending {
+  background: rgba(136, 136, 160, 0.12);
+  color: var(--color-text-secondary);
+  border: 1px solid rgba(136, 136, 160, 0.2);
+}
+
+.syscheck-item-status--ready {
+  background: rgba(52, 211, 153, 0.1);
+  color: var(--color-success);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+}
