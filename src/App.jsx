@@ -33,7 +33,7 @@ function App() {
         />
       )}
       {screen === 'exam' && (
-        <ExamScreen onBackToInstructions={() => setScreen('instructions')} />
+        <ExamScreen onBackToSetup={() => setScreen('welcome')} />
       )}
     </>
   );
