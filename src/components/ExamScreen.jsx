@@ -1,16 +1,84 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { questions } from '../data/questions.js';
 import './ExamScreen.css';
 
+const SESSION_STORAGE_KEY = 'newton-athena-exam-session';
+const EXAM_DURATION_SECONDS = 30 * 60; // 30 minutes = 1800 seconds
+
+// ── Time & Session Helpers ──────────────────────────────────────────────────
+
+function formatTime(totalSeconds) {
+  const clamped = Math.max(0, totalSeconds);
+  const minutes = Math.floor(clamped / 60);
+  const seconds = clamped % 60;
+  const mm = String(minutes).padStart(2, '0');
+  const ss = String(seconds).padStart(2, '0');
+  return `${mm}:${ss}`;
+}
+
+function getInitialExamSession() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.deadlineAt === 'number') {
+        const msLeft = parsed.deadlineAt - Date.now();
+        // If deadline has already passed, treat as expired immediately
+        if (msLeft <= 0) {
+          return {
+            answers: parsed.answers || {},
+            currentIndex: typeof parsed.currentIndex === 'number' ? parsed.currentIndex : 0,
+            deadlineAt: parsed.deadlineAt,
+            isExpired: true,
+          };
+        }
+        return {
+          answers: parsed.answers || {},
+          currentIndex: typeof parsed.currentIndex === 'number' ? parsed.currentIndex : 0,
+          deadlineAt: parsed.deadlineAt,
+          isExpired: false,
+        };
+      }
+    }
+  } catch (err) {
+    console.error('Failed to read session from sessionStorage:', err);
+  }
+
+  // Brand-new session with 30-minute deadline
+  const newDeadline = Date.now() + EXAM_DURATION_SECONDS * 1000;
+  return {
+    answers: {},
+    currentIndex: 0,
+    deadlineAt: newDeadline,
+    isExpired: false,
+  };
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
+
 function ExamScreen({ onBackToSetup, onBackToInstructions }) {
   const devExit = onBackToSetup || onBackToInstructions;
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState({});
+
+  // Restore or initialize session state once on mount
+  const [initialSession] = useState(getInitialExamSession);
+  const deadlineAt = initialSession.deadlineAt;
+
+  const [currentIndex, setCurrentIndex] = useState(initialSession.currentIndex);
+  const [answers, setAnswers] = useState(initialSession.answers);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(initialSession.isExpired);
+  const [submissionReason, setSubmissionReason] = useState(
+    initialSession.isExpired ? 'timeout' : 'manual'
+  );
+
+  // Calculate initial time remaining
+  const [timeRemaining, setTimeRemaining] = useState(() => {
+    if (initialSession.isExpired) return 0;
+    return Math.max(0, Math.ceil((deadlineAt - Date.now()) / 1000));
+  });
 
   const totalQuestions = questions.length;
-  const currentQuestion = questions[currentIndex];
+  const currentQuestion = questions[currentIndex] || questions[0];
   const currentSelectedOption = answers[currentQuestion.id];
 
   // Calculated statistics
@@ -20,7 +88,62 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
   const unansweredCount = totalQuestions - answeredCount;
   const progressPercent = Math.round(((currentIndex + 1) / totalQuestions) * 100);
 
-  // Handlers
+  // Ref to prevent duplicate submission calls
+  const isSubmittedRef = useRef(isSubmitted);
+  isSubmittedRef.current = isSubmitted;
+
+  // Single safe submission handler
+  const submitExam = useCallback((reason = 'manual') => {
+    if (isSubmittedRef.current) return;
+    isSubmittedRef.current = true;
+    setShowConfirmModal(false);
+    setIsSubmitted(true);
+    setSubmissionReason(reason);
+
+    try {
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch (_) {}
+  }, []);
+
+  // ── Autosave Effect ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (isSubmitted) return;
+    try {
+      const payload = {
+        version: 1,
+        answers,
+        currentIndex,
+        deadlineAt,
+      };
+      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(payload));
+    } catch (err) {
+      console.error('Failed to autosave session:', err);
+    }
+  }, [answers, currentIndex, deadlineAt, isSubmitted]);
+
+  // ── Countdown Timer Effect ────────────────────────────────────────────────
+  useEffect(() => {
+    if (isSubmitted) return;
+
+    const tick = () => {
+      const msLeft = deadlineAt - Date.now();
+      const secondsLeft = Math.max(0, Math.ceil(msLeft / 1000));
+      setTimeRemaining(secondsLeft);
+
+      if (secondsLeft <= 0) {
+        submitExam('timeout');
+      }
+    };
+
+    tick();
+    const intervalId = setInterval(tick, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [deadlineAt, isSubmitted, submitExam]);
+
+  // ── User Navigation & Interaction ─────────────────────────────────────────
   const handleSelectOption = (optionIndex) => {
     setAnswers((prev) => ({
       ...prev,
@@ -48,12 +171,27 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     }
   };
 
-  const handleConfirmSubmit = () => {
-    setShowConfirmModal(false);
-    setIsSubmitted(true);
+  const handleDevReset = () => {
+    try {
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch (_) {}
+    if (devExit) {
+      devExit();
+    }
   };
 
-  // ── Submitted Confirmation Screen ─────────────────────────────────────────
+  // ── Timer Urgency Styling ─────────────────────────────────────────────────
+  let timerUrgencyClass = 'exam-timer--normal';
+  let timerAriaUrgency = 'Normal';
+  if (timeRemaining <= 60) {
+    timerUrgencyClass = 'exam-timer--critical';
+    timerAriaUrgency = 'Critical urgency, less than 1 minute remaining';
+  } else if (timeRemaining <= 300) {
+    timerUrgencyClass = 'exam-timer--warning';
+    timerAriaUrgency = 'Warning urgency, less than 5 minutes remaining';
+  }
+
+  // ── Submitted View ────────────────────────────────────────────────────────
   if (isSubmitted) {
     return (
       <div className="exam-submitted-screen">
@@ -66,7 +204,9 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
             <h1 className="exam-title">Newton Athena</h1>
             <h2 className="exam-submitted-title">Examination Submitted</h2>
             <p className="exam-submitted-lead">
-              Your examination has been submitted successfully.
+              {submissionReason === 'timeout'
+                ? 'Your examination was automatically submitted as the time limit expired.'
+                : 'Your examination has been submitted successfully.'}
             </p>
           </header>
 
@@ -95,7 +235,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
                 type="button"
                 className="btn-secondary"
                 id="exam-dev-reset-btn"
-                onClick={devExit}
+                onClick={handleDevReset}
               >
                 Return to Setup (Development Prototype)
               </button>
@@ -106,14 +246,30 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     );
   }
 
-  // ── Active Examination Screen ─────────────────────────────────────────────
+  // ── Active Examination View ───────────────────────────────────────────────
   return (
     <div className="exam-container">
-      {/* ── Top Bar ── */}
+      {/* ── Top Bar with Prominent Timer ── */}
       <header className="exam-topbar">
         <div className="exam-brand">
           <h1 className="exam-brand-title">Newton Athena</h1>
           <span className="exam-brand-tag">Examination</span>
+        </div>
+
+        {/* ── Countdown Timer Display ── */}
+        <div
+          className={`exam-timer-card ${timerUrgencyClass}`}
+          role="timer"
+          aria-live="polite"
+          aria-label={`Time Remaining: ${formatTime(timeRemaining)}. ${timerAriaUrgency}`}
+        >
+          <span className="exam-timer-icon" aria-hidden="true">⏱</span>
+          <div className="exam-timer-meta">
+            <span className="exam-timer-label">Time Remaining</span>
+            <span className="exam-timer-digits" id="exam-timer-display">
+              {formatTime(timeRemaining)}
+            </span>
+          </div>
         </div>
 
         <div className="exam-topbar-meta">
@@ -279,7 +435,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
         </aside>
       </div>
 
-      {/* ── Submission Confirmation Dialog ── */}
+      {/* ── Submission Confirmation Dialog (Manual Submit Only) ── */}
       {showConfirmModal && (
         <div
           className="exam-modal-backdrop"
@@ -331,7 +487,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
                 type="button"
                 id="modal-submit-confirm-btn"
                 className="btn-primary btn-submit-action"
-                onClick={handleConfirmSubmit}
+                onClick={() => submitExam('manual')}
               >
                 Submit Examination
               </button>
