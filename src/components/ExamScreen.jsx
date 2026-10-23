@@ -4,6 +4,8 @@ import {
   useIntegrityEvents,
   EVENT_TYPES,
 } from '../integrity/integrityEventEngine.js';
+import MonitoringSession from './MonitoringSession.jsx';
+import { useEvidenceCapture } from '../evidence/evidenceCapture.js';
 import './ExamScreen.css';
 
 const SESSION_STORAGE_KEY = 'newton-athena-exam-session';
@@ -18,6 +20,16 @@ function formatTime(totalSeconds) {
   const mm = String(minutes).padStart(2, '0');
   const ss = String(seconds).padStart(2, '0');
   return `${mm}:${ss}`;
+}
+
+function formatTimeOfDay(isoString) {
+  if (!isoString) return '';
+  try {
+    const d = new Date(isoString);
+    return d.toTimeString().split(' ')[0];
+  } catch (_) {
+    return '';
+  }
 }
 
 function getInitialExamSession() {
@@ -93,6 +105,30 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     recordEvent: recordIntegrityEvent,
     counts: integrityCounts,
   } = useIntegrityEvents();
+
+  // Proctoring Camera & Evidence Capture Setup
+  const cameraVideoRef = useRef(null);
+  const [cameraStatus, setCameraStatus] = useState('initializing');
+
+  const handleMonitoringStatusChange = useCallback((statusData) => {
+    if (statusData?.cameraStatus) {
+      setCameraStatus(statusData.cameraStatus);
+    }
+  }, []);
+
+  const {
+    evidenceList,
+    counts: evidenceCounts,
+    latestEvidence,
+    captureOnIntegrityEvent,
+  } = useEvidenceCapture({
+    videoRef: cameraVideoRef,
+    isActive: !isSubmitted,
+  });
+
+  // Ref to access captureOnIntegrityEvent safely inside event listeners without stale closures
+  const captureOnIntegrityEventRef = useRef(captureOnIntegrityEvent);
+  captureOnIntegrityEventRef.current = captureOnIntegrityEvent;
 
   // Refs for stable event listener callbacks without stale closures
   const wasFullscreenActiveRef = useRef(false);
@@ -202,7 +238,10 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
 
         // Only record exit event if fullscreen was previously active
         if (wasFullscreenActiveRef.current) {
-          recordIntegrityEvent(EVENT_TYPES.FULLSCREEN_EXIT);
+          const evt = recordIntegrityEvent(EVENT_TYPES.FULLSCREEN_EXIT);
+          if (evt?.id) {
+            captureOnIntegrityEventRef.current(evt.id);
+          }
         }
       }
     };
@@ -212,7 +251,10 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
       if (!isWindowFocusedRef.current) return; // Prevent duplicate blurs
       isWindowFocusedRef.current = false;
       setIsWindowFocused(false);
-      recordIntegrityEvent(EVENT_TYPES.WINDOW_BLUR);
+      const evt = recordIntegrityEvent(EVENT_TYPES.WINDOW_BLUR);
+      if (evt?.id) {
+        captureOnIntegrityEventRef.current(evt.id);
+      }
     };
 
     const handleFocus = () => {
@@ -351,6 +393,33 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
             )}
           </div>
 
+          {/* Camera Evidence Telemetry Summary */}
+          <div className="exam-submitted-evidence-summary" id="submitted-evidence-summary">
+            <div className="exam-evidence-summary-row">
+              <span className="exam-evidence-summary-label">
+                Camera evidence snapshots captured:
+              </span>
+              <span className="exam-evidence-summary-count" id="submitted-evidence-total">
+                {evidenceCounts.total}
+              </span>
+            </div>
+
+            {evidenceCounts.total > 0 ? (
+              <div className="exam-evidence-breakdown">
+                <span className="breakdown-tag breakdown-tag--periodic" id="submitted-periodic-count">
+                  Periodic snapshots: {evidenceCounts.periodic}
+                </span>
+                <span className="breakdown-tag breakdown-tag--warning" id="submitted-integrity-count">
+                  Integrity-triggered: {evidenceCounts.integrity}
+                </span>
+              </div>
+            ) : (
+              <p className="exam-no-evidence-text" id="submitted-no-evidence">
+                No camera evidence was captured.
+              </p>
+            )}
+          </div>
+
           <div className="exam-submitted-notice">
             <p>Your examination session has ended.</p>
           </div>
@@ -414,6 +483,9 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
           </span>
           <span className="exam-pill-badge pill--neutral" id="events-count-pill">
             Events: {integrityCounts.total}
+          </span>
+          <span className="exam-pill-badge pill--neutral" id="evidence-count-pill">
+            Evidence: {evidenceCounts.total}
           </span>
         </div>
 
@@ -557,57 +629,111 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
           </footer>
         </main>
 
-        {/* Right / Side: Question Palette */}
-        <aside className="exam-palette-panel" aria-label="Question Navigator">
-          <div className="exam-palette-header">
-            <h3 className="exam-palette-title">Question Navigator</h3>
-            <span className="exam-palette-summary">
-              {answeredCount} / {totalQuestions} Answered
-            </span>
+        {/* Right / Side: Proctoring Camera, Evidence Status & Question Palette */}
+        <aside className="exam-sidebar" aria-label="Examination Monitoring and Navigation">
+          {/* 1. Proctoring Camera & Evidence Status Card */}
+          <div className="exam-proctor-card" id="exam-proctor-card">
+            <div className="exam-proctor-header">
+              <span className="exam-proctor-title">Proctoring Feed</span>
+              <span
+                className={`exam-camera-pill ${cameraStatus === 'active' ? 'exam-camera-pill--active' : 'exam-camera-pill--warn'}`}
+                id="exam-camera-status-pill"
+              >
+                {cameraStatus === 'active' ? '● Camera Active' : '⚠ Camera Inactive'}
+              </span>
+            </div>
+
+            <div className="exam-proctor-video-container">
+              <MonitoringSession
+                isActive={!isSubmitted}
+                videoRef={cameraVideoRef}
+                hideDevices={true}
+                onStatusChange={handleMonitoringStatusChange}
+              />
+            </div>
+
+            {/* Evidence Telemetry */}
+            <div className="exam-evidence-telemetry">
+              <div className="exam-evidence-row">
+                <span className="evidence-label">Snapshots Captured</span>
+                <span className="evidence-value" id="evidence-snapshots-count">
+                  {evidenceCounts.total}
+                </span>
+              </div>
+              <div className="exam-evidence-row">
+                <span className="evidence-label">Last Snapshot</span>
+                <span className="evidence-value evidence-value--time" id="evidence-last-time">
+                  {latestEvidence ? formatTimeOfDay(latestEvidence.timestamp) : 'Awaiting snapshot…'}
+                </span>
+              </div>
+            </div>
+
+            {/* Latest snapshot preview */}
+            {latestEvidence && (
+              <div className="exam-evidence-thumb-container">
+                <span className="evidence-thumb-tag">Latest Evidence Sample</span>
+                <img
+                  src={latestEvidence.imageData}
+                  alt="Latest Camera Snapshot"
+                  className="exam-evidence-thumb"
+                  id="latest-evidence-thumb"
+                />
+              </div>
+            )}
           </div>
 
-          <div className="exam-palette-grid">
-            {questions.map((q, idx) => {
-              const isCurrent = idx === currentIndex;
-              const isAnswered =
-                answers[q.id] !== null && answers[q.id] !== undefined;
-
-              let statusClass = 'palette-btn--unanswered';
-              if (isAnswered) statusClass = 'palette-btn--answered';
-              if (isCurrent) statusClass += ' palette-btn--current';
-
-              const ariaLabel = `Question ${idx + 1}${
-                isCurrent ? ', current question' : ''
-              }${isAnswered ? ', answered' : ', unanswered'}`;
-
-              return (
-                <button
-                  key={q.id}
-                  type="button"
-                  id={`palette-btn-${idx + 1}`}
-                  className={`exam-palette-btn ${statusClass}`}
-                  onClick={() => handleJumpToQuestion(idx)}
-                  aria-label={ariaLabel}
-                  aria-current={isCurrent ? 'true' : undefined}
-                >
-                  {idx + 1}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="exam-palette-legend">
-            <div className="legend-item">
-              <span className="legend-dot legend-dot--current" />
-              <span>Current</span>
+          {/* 2. Question Palette */}
+          <div className="exam-palette-panel" aria-label="Question Navigator">
+            <div className="exam-palette-header">
+              <h3 className="exam-palette-title">Question Navigator</h3>
+              <span className="exam-palette-summary">
+                {answeredCount} / {totalQuestions} Answered
+              </span>
             </div>
-            <div className="legend-item">
-              <span className="legend-dot legend-dot--answered" />
-              <span>Answered</span>
+
+            <div className="exam-palette-grid">
+              {questions.map((q, idx) => {
+                const isCurrent = idx === currentIndex;
+                const isAnswered =
+                  answers[q.id] !== null && answers[q.id] !== undefined;
+
+                let statusClass = 'palette-btn--unanswered';
+                if (isAnswered) statusClass = 'palette-btn--answered';
+                if (isCurrent) statusClass += ' palette-btn--current';
+
+                const ariaLabel = `Question ${idx + 1}${
+                  isCurrent ? ', current question' : ''
+                }${isAnswered ? ', answered' : ', unanswered'}`;
+
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    id={`palette-btn-${idx + 1}`}
+                    className={`exam-palette-btn ${statusClass}`}
+                    onClick={() => handleJumpToQuestion(idx)}
+                    aria-label={ariaLabel}
+                    aria-current={isCurrent ? 'true' : undefined}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
             </div>
-            <div className="legend-item">
-              <span className="legend-dot legend-dot--unanswered" />
-              <span>Unanswered</span>
+
+            <div className="exam-palette-legend">
+              <div className="legend-item">
+                <span className="legend-dot legend-dot--current" />
+                <span>Current</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-dot legend-dot--answered" />
+                <span>Answered</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-dot legend-dot--unanswered" />
+                <span>Unanswered</span>
+              </div>
             </div>
           </div>
         </aside>

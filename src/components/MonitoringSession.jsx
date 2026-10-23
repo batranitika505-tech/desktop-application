@@ -25,9 +25,17 @@ function getFriendlyMediaError(err) {
  * Props:
  * - isActive (boolean): Whether monitoring stream should be active.
  * - onStatusChange (function): Callback notifying parent of session changes.
+ * - videoRef (React.RefObject): Optional external ref to attach to the live HTMLVideoElement.
+ * - hideDevices (boolean): Optional flag to omit device cards when rendered in compact examination views.
  */
-function MonitoringSession({ isActive = true, onStatusChange }) {
-  const videoRef = useRef(null);
+function MonitoringSession({
+  isActive = true,
+  onStatusChange,
+  videoRef: externalVideoRef,
+  hideDevices = false,
+}) {
+  const internalVideoRef = useRef(null);
+  const videoRef = externalVideoRef || internalVideoRef;
   const streamRef = useRef(null);
 
   // Statuses: 'initializing' | 'active' | 'disconnected' | 'error' | 'stopped'
@@ -263,23 +271,25 @@ function MonitoringSession({ isActive = true, onStatusChange }) {
       )}
 
       {/* ── Device Status Cards ── */}
-      <div className="mon-devices">
-        <div className="mon-device-card" id="mon-camera-status">
-          <div className="mon-device-info">
-            <span className="mon-device-label">Camera</span>
-            <span className="mon-device-sublabel">Video Feed</span>
+      {!hideDevices && (
+        <div className="mon-devices">
+          <div className="mon-device-card" id="mon-camera-status">
+            <div className="mon-device-info">
+              <span className="mon-device-label">Camera</span>
+              <span className="mon-device-sublabel">Video Feed</span>
+            </div>
+            {renderBadge(cameraStatus)}
           </div>
-          {renderBadge(cameraStatus)}
-        </div>
 
-        <div className="mon-device-card" id="mon-mic-status">
-          <div className="mon-device-info">
-            <span className="mon-device-label">Microphone</span>
-            <span className="mon-device-sublabel">Audio Stream</span>
+          <div className="mon-device-card" id="mon-mic-status">
+            <div className="mon-device-info">
+              <span className="mon-device-label">Microphone</span>
+              <span className="mon-device-sublabel">Audio Stream</span>
+            </div>
+            {renderBadge(micStatus)}
           </div>
-          {renderBadge(micStatus)}
         </div>
-      </div>
+      )}
     </div>
   );
 }
