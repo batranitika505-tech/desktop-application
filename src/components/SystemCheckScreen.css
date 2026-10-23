@@ -15,7 +15,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
+  gap: 1.5rem;
   max-width: 520px;
   width: 100%;
 }
@@ -50,57 +50,90 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
 
-.syscheck-item {
+/* ── Overall Status ── */
+
+.syscheck-overall {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  padding: 1rem 1.25rem;
+  padding: 0.875rem 1.25rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
-.syscheck-item-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.syscheck-item-label {
-  font-size: 0.875rem;
+.syscheck-overall-label {
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.syscheck-item-sublabel {
-  font-size: 0.7rem;
-  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--color-text-secondary);
 }
 
-/* ── Status Badges ── */
-
-.syscheck-item-status {
-  font-size: 0.75rem;
+.syscheck-overall-value {
+  font-size: 0.875rem;
   font-weight: 600;
-  padding: 0.3rem 0.75rem;
-  border-radius: 100px;
-  white-space: nowrap;
 }
 
-.syscheck-item-status--pending {
-  background: rgba(136, 136, 160, 0.12);
+/* overall states */
+.syscheck-overall--idle .syscheck-overall-value {
   color: var(--color-text-secondary);
-  border: 1px solid rgba(136, 136, 160, 0.2);
 }
 
-.syscheck-item-status--ready {
-  background: rgba(52, 211, 153, 0.1);
+.syscheck-overall--checking .syscheck-overall-value {
+  color: var(--color-accent);
+}
+
+.syscheck-overall--ready .syscheck-overall-value {
   color: var(--color-success);
-  border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+.syscheck-overall--failed .syscheck-overall-value {
+  color: #f87171;
+}
+
+/* ── Placeholder Alert ── */
+
+.syscheck-placeholder-alert {
+  width: 100%;
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: var(--color-success);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.825rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ── Actions ── */
+
+.syscheck-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Disabled button states */
+.syscheck-actions .btn-primary:disabled {
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.6;
+}
+
+.syscheck-actions .btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }

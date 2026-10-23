@@ -1,0 +1,107 @@
+/* ── SystemCheckItem ── */
+
+.sci {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  gap: 0.5rem;
+}
+
+.sci-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sci-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sci-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.sci-sublabel {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+}
+
+.sci-detail {
+  font-size: 0.775rem;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.08);
+  border-left: 3px solid #f87171;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0 4px 4px 0;
+  line-height: 1.4;
+}
+
+/* ── Badges ── */
+
+.sci-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.sci-badge-icon {
+  font-style: normal;
+  line-height: 1;
+}
+
+/* idle — not yet run */
+.sci-badge--idle {
+  background: rgba(136, 136, 160, 0.12);
+  color: var(--color-text-secondary);
+  border: 1px solid rgba(136, 136, 160, 0.2);
+}
+
+/* checking — in progress */
+.sci-badge--checking {
+  background: rgba(108, 99, 255, 0.1);
+  color: var(--color-accent);
+  border: 1px solid rgba(108, 99, 255, 0.2);
+}
+
+/* ready — success */
+.sci-badge--ready {
+  background: rgba(52, 211, 153, 0.1);
+  color: var(--color-success);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+/* denied — permission blocked */
+.sci-badge--denied {
+  background: rgba(248, 113, 113, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+/* unavailable — device not found / hardware error */
+.sci-badge--unavailable {
+  background: rgba(251, 146, 60, 0.1);
+  color: #fb923c;
+  border: 1px solid rgba(251, 146, 60, 0.2);
+}
+
+/* action-required — derived permissions state */
+.sci-badge--action-required {
+  background: rgba(248, 113, 113, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
