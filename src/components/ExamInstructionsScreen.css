@@ -1,0 +1,372 @@
+/* ── ExamInstructionsScreen Styles ── */
+
+.instr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1.5rem;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(108, 99, 255, 0.08) 0%, transparent 60%),
+    var(--color-bg);
+}
+
+.instr-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 680px;
+  width: 100%;
+  max-height: calc(100vh - 4rem);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Header ── */
+
+.instr-header {
+  padding: 1.5rem 1.75rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.instr-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(108, 99, 255, 0.12);
+  color: var(--color-accent);
+  border: 1px solid rgba(108, 99, 255, 0.25);
+  padding: 0.2rem 0.6rem;
+  border-radius: 100px;
+  margin-bottom: 0.25rem;
+}
+
+.instr-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.instr-subtitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.instr-description {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* ── Scrollable Body ── */
+
+.instr-scrollable {
+  padding: 1.5rem 1.75rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+/* Custom scrollbar for dark theme */
+.instr-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.instr-scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.instr-scrollable::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.instr-scrollable::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* ── Sections ── */
+
+.instr-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.instr-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+}
+
+.instr-text {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* ── Overview Grid ── */
+
+.instr-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+  gap: 0.6rem;
+}
+
+.instr-overview-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.instr-overview-label {
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+}
+
+.instr-overview-val {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* ── Monitoring Notice ── */
+
+.instr-mon-blocks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
+.instr-mon-block {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.instr-mon-subtitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.instr-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.825rem;
+  color: var(--color-text-secondary);
+}
+
+.instr-list--active li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-primary);
+}
+
+.instr-check-icon {
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.instr-list--controls li {
+  position: relative;
+  padding-left: 1rem;
+  line-height: 1.4;
+}
+
+.instr-list--controls li::before {
+  content: '•';
+  position: absolute;
+  left: 0.2rem;
+  color: var(--color-accent);
+}
+
+/* ── Rules List ── */
+
+.instr-rules-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.instr-rule-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.875rem;
+}
+
+.instr-rule-num {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  background: rgba(108, 99, 255, 0.12);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.instr-rule-text {
+  font-size: 0.825rem;
+  color: var(--color-text-primary);
+  line-height: 1.45;
+}
+
+/* ── Integrity Notice ── */
+
+.instr-integrity-panel {
+  background: rgba(108, 99, 255, 0.06);
+  border: 1px solid rgba(108, 99, 255, 0.2);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.instr-integrity-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.instr-integrity-icon {
+  font-size: 0.85rem;
+  color: var(--color-accent);
+}
+
+.instr-integrity-title {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.instr-integrity-text {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* ── Footer ── */
+
+.instr-footer {
+  padding: 1.25rem 1.75rem;
+  border-top: 1px solid var(--color-border);
+  background: rgba(10, 10, 15, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+/* ── Checkbox ── */
+
+.instr-agreement {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.instr-checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  display: grid;
+  place-content: center;
+  transition: all 0.15s ease;
+}
+
+.instr-checkbox:hover {
+  border-color: var(--color-accent);
+}
+
+.instr-checkbox:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.instr-checkbox:checked {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.instr-checkbox:checked::before {
+  content: '✓';
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.instr-checkbox-label {
+  font-size: 0.825rem;
+  color: var(--color-text-primary);
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+/* ── Actions ── */
+
+.instr-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.instr-actions .btn-primary:disabled {
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.55;
+}

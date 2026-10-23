@@ -2,7 +2,7 @@ import { useState } from 'react';
 import MonitoringSession from './MonitoringSession.jsx';
 import './MonitoringTestScreen.css';
 
-function MonitoringTestScreen({ onBack }) {
+function MonitoringTestScreen({ onBack, onContinue }) {
   const [isMonitoring, setIsMonitoring] = useState(true);
   const [sessionData, setSessionData] = useState({
     isMonitoring: true,
@@ -96,6 +96,17 @@ function MonitoringTestScreen({ onBack }) {
               onClick={handleStartMonitoring}
             >
               Start Monitoring
+            </button>
+          )}
+
+          {onContinue && (
+            <button
+              className="btn-primary"
+              type="button"
+              id="continue-instructions-btn"
+              onClick={onContinue}
+            >
+              Continue to Instructions
             </button>
           )}
         </div>
