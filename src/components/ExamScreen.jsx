@@ -23,7 +23,6 @@ function getInitialExamSession() {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed.deadlineAt === 'number') {
         const msLeft = parsed.deadlineAt - Date.now();
-        // If deadline has already passed, treat as expired immediately
         if (msLeft <= 0) {
           return {
             answers: parsed.answers || {},
@@ -44,7 +43,6 @@ function getInitialExamSession() {
     console.error('Failed to read session from sessionStorage:', err);
   }
 
-  // Brand-new session with 30-minute deadline
   const newDeadline = Date.now() + EXAM_DURATION_SECONDS * 1000;
   return {
     answers: {},
@@ -71,11 +69,27 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     initialSession.isExpired ? 'timeout' : 'manual'
   );
 
-  // Calculate initial time remaining
+  // Remaining time
   const [timeRemaining, setTimeRemaining] = useState(() => {
     if (initialSession.isExpired) return 0;
     return Math.max(0, Math.ceil((deadlineAt - Date.now()) / 1000));
   });
+
+  // ── Milestone 8: Fullscreen & Window Focus State ──────────────────────────
+  const [isFullscreenActive, setIsFullscreenActive] = useState(
+    typeof document !== 'undefined' ? !!document.fullscreenElement : false
+  );
+  const [isWindowFocused, setIsWindowFocused] = useState(
+    typeof document !== 'undefined' ? document.hasFocus() : true
+  );
+  const [integrityEvents, setIntegrityEvents] = useState([]);
+
+  // Refs for stable event listener callbacks without stale closures
+  const wasFullscreenActiveRef = useRef(false);
+  const isFullscreenActiveRef = useRef(false);
+  const isWindowFocusedRef = useRef(true);
+  const isSubmittedRef = useRef(isSubmitted);
+  isSubmittedRef.current = isSubmitted;
 
   const totalQuestions = questions.length;
   const currentQuestion = questions[currentIndex] || questions[0];
@@ -88,9 +102,16 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
   const unansweredCount = totalQuestions - answeredCount;
   const progressPercent = Math.round(((currentIndex + 1) / totalQuestions) * 100);
 
-  // Ref to prevent duplicate submission calls
-  const isSubmittedRef = useRef(isSubmitted);
-  isSubmittedRef.current = isSubmitted;
+  // Record an integrity event with real timestamp and unique ID
+  const recordIntegrityEvent = useCallback((type, severity = 'warning') => {
+    const event = {
+      id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      type,
+      timestamp: new Date().toISOString(),
+      severity,
+    };
+    setIntegrityEvents((prev) => [...prev, event]);
+  }, []);
 
   // Single safe submission handler
   const submitExam = useCallback((reason = 'manual') => {
@@ -99,6 +120,13 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     setShowConfirmModal(false);
     setIsSubmitted(true);
     setSubmissionReason(reason);
+
+    // Exit fullscreen cleanly if active
+    try {
+      if (typeof document !== 'undefined' && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    } catch (_) {}
 
     try {
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
@@ -142,6 +170,81 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
       clearInterval(intervalId);
     };
   }, [deadlineAt, isSubmitted, submitExam]);
+
+  // ── Fullscreen & Window Focus Listeners ────────────────────────────────────
+  useEffect(() => {
+    if (isSubmitted) return;
+
+    // Initial fullscreen request when examination starts
+    try {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {
+          // Failure on initial mount (e.g. platform policy) is not counted as cheating
+        });
+      }
+    } catch (_) {}
+
+    const handleFullscreenChange = () => {
+      if (isSubmittedRef.current) return;
+      const isNowFullscreen = !!document.fullscreenElement;
+
+      if (isNowFullscreen) {
+        setIsFullscreenActive(true);
+        isFullscreenActiveRef.current = true;
+
+        if (wasFullscreenActiveRef.current) {
+          // Restored after previously exiting
+          recordIntegrityEvent('FULLSCREEN_RESTORED', 'info');
+        } else {
+          // Marked active for the first time
+          wasFullscreenActiveRef.current = true;
+        }
+      } else {
+        setIsFullscreenActive(false);
+        isFullscreenActiveRef.current = false;
+
+        // Only record exit event if fullscreen was previously active
+        if (wasFullscreenActiveRef.current) {
+          recordIntegrityEvent('FULLSCREEN_EXIT', 'warning');
+        }
+      }
+    };
+
+    const handleBlur = () => {
+      if (isSubmittedRef.current) return;
+      if (!isWindowFocusedRef.current) return; // Prevent duplicate blurs
+      isWindowFocusedRef.current = false;
+      setIsWindowFocused(false);
+      recordIntegrityEvent('WINDOW_BLUR', 'warning');
+    };
+
+    const handleFocus = () => {
+      if (isSubmittedRef.current) return;
+      if (isWindowFocusedRef.current) return; // Prevent duplicate focuses
+      isWindowFocusedRef.current = true;
+      setIsWindowFocused(true);
+      recordIntegrityEvent('WINDOW_FOCUS', 'info');
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    window.addEventListener('blur', handleBlur);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [isSubmitted, recordIntegrityEvent]);
+
+  // Request fullscreen again (user gesture)
+  const handleRequestFullscreen = () => {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch (_) {}
+  };
 
   // ── User Navigation & Interaction ─────────────────────────────────────────
   const handleSelectOption = (optionIndex) => {
@@ -191,6 +294,9 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     timerAriaUrgency = 'Warning urgency, less than 5 minutes remaining';
   }
 
+  // Overall monitoring state
+  const isEnvironmentOptimal = isFullscreenActive && isWindowFocused;
+
   // ── Submitted View ────────────────────────────────────────────────────────
   if (isSubmitted) {
     return (
@@ -225,6 +331,16 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
             </div>
           </div>
 
+          {/* Environment Integrity Summary */}
+          <div className="exam-submitted-integrity-summary">
+            <span className="exam-integrity-summary-label">
+              Environment integrity events recorded:
+            </span>
+            <span className="exam-integrity-summary-count">
+              {integrityEvents.length}
+            </span>
+          </div>
+
           <div className="exam-submitted-notice">
             <p>Your examination session has ended.</p>
           </div>
@@ -249,7 +365,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
   // ── Active Examination View ───────────────────────────────────────────────
   return (
     <div className="exam-container">
-      {/* ── Top Bar with Prominent Timer ── */}
+      {/* ── Top Bar ── */}
       <header className="exam-topbar">
         <div className="exam-brand">
           <h1 className="exam-brand-title">Newton Athena</h1>
@@ -270,6 +386,22 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
               {formatTime(timeRemaining)}
             </span>
           </div>
+        </div>
+
+        {/* ── Monitoring Status Pills ── */}
+        <div className="exam-monitoring-pills">
+          <span
+            className={`exam-pill-badge ${isEnvironmentOptimal ? 'pill--active' : 'pill--warning'}`}
+            id="monitoring-status-pill"
+          >
+            Monitoring: {isEnvironmentOptimal ? 'Active' : 'Warning'}
+          </span>
+          <span
+            className={`exam-pill-badge ${isFullscreenActive ? 'pill--active' : 'pill--warning'}`}
+            id="fullscreen-status-pill"
+          >
+            Fullscreen: {isFullscreenActive ? 'Active' : 'Exited'}
+          </span>
         </div>
 
         <div className="exam-topbar-meta">
@@ -296,6 +428,39 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
           style={{ width: `${progressPercent}%` }}
         />
       </div>
+
+      {/* ── Non-intrusive Candidate Environment Warnings ── */}
+      {(!isWindowFocused || !isFullscreenActive) && (
+        <div className="exam-warning-container" role="alert" aria-live="assertive">
+          {!isWindowFocused && (
+            <div className="exam-warning-banner exam-warning-banner--blur" id="blur-warning-banner">
+              <span className="warning-banner-icon" aria-hidden="true">⚠</span>
+              <div className="warning-banner-body">
+                <strong>Examination window is not focused</strong>
+                <span>Return to the examination window to continue.</span>
+              </div>
+            </div>
+          )}
+
+          {!isFullscreenActive && (
+            <div className="exam-warning-banner exam-warning-banner--fullscreen" id="fullscreen-warning-banner">
+              <span className="warning-banner-icon" aria-hidden="true">⚠</span>
+              <div className="warning-banner-body">
+                <strong>Fullscreen mode has been exited</strong>
+                <span>Return to fullscreen to maintain examination conditions.</span>
+              </div>
+              <button
+                type="button"
+                id="return-fullscreen-btn"
+                className="btn-return-fullscreen"
+                onClick={handleRequestFullscreen}
+              >
+                Return to Fullscreen
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Main Layout: Content + Palette ── */}
       <div className="exam-content-layout">

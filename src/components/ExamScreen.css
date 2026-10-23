@@ -19,6 +19,7 @@
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .exam-brand {
@@ -137,6 +138,35 @@
   }
 }
 
+/* ── Monitoring Status Pills in Header ── */
+
+.exam-monitoring-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.exam-pill-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 100px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.pill--active {
+  background: rgba(52, 211, 153, 0.1);
+  color: var(--color-success);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+.pill--warning {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
 .exam-topbar-meta {
   display: flex;
   align-items: center;
@@ -172,6 +202,81 @@
   height: 100%;
   background: linear-gradient(90deg, var(--color-accent), #34d399);
   transition: width 0.25s ease;
+}
+
+/* ── Candidate Environment Warnings ── */
+
+.exam-warning-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem 1.75rem 0;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.exam-warning-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.75rem 1.15rem;
+  border-radius: var(--radius);
+  font-size: 0.825rem;
+  line-height: 1.4;
+  flex-wrap: wrap;
+}
+
+.exam-warning-banner--blur {
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-left: 4px solid #f87171;
+  color: #fca5a5;
+}
+
+.exam-warning-banner--fullscreen {
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-left: 4px solid #fbbf24;
+  color: #fde68a;
+}
+
+.warning-banner-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.warning-banner-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+}
+
+.warning-banner-body strong {
+  color: var(--color-text-primary);
+  font-size: 0.85rem;
+}
+
+.btn-return-fullscreen {
+  appearance: none;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  font-family: var(--font-family);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.4rem 0.85rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-return-fullscreen:hover {
+  background: rgba(251, 191, 36, 0.25);
+  border-color: #fbbf24;
 }
 
 /* ── Content Layout ── */
@@ -657,6 +762,24 @@
 
 .exam-stat-value--muted {
   color: var(--color-text-secondary);
+}
+
+.exam-submitted-integrity-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.exam-integrity-summary-count {
+  font-weight: 700;
+  color: var(--color-text-primary);
 }
 
 .exam-submitted-notice {
