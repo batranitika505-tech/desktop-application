@@ -733,7 +733,7 @@
   margin-top: 0.25rem;
 }
 
-.exam-submitted-stats {
+.exam-submitted-stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
@@ -760,6 +760,7 @@
 .exam-stat-value {
   font-size: 1.25rem;
   font-weight: 700;
+  color: var(--color-text-primary);
 }
 
 .exam-stat-value--success {
@@ -770,65 +771,98 @@
   color: var(--color-text-secondary);
 }
 
-.exam-submitted-integrity-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 0.85rem 1rem;
-  font-size: 0.8rem;
-  color: var(--color-text-secondary);
-}
-
-.exam-integrity-summary-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.exam-integrity-summary-count {
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.exam-integrity-breakdown {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding-top: 0.35rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.breakdown-tag {
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-}
-
-.breakdown-tag--warning {
-  background: rgba(251, 191, 36, 0.1);
+.exam-stat-value--warn {
   color: #fbbf24;
-  border: 1px solid rgba(251, 191, 36, 0.25);
 }
 
-.breakdown-tag--info {
-  background: rgba(108, 99, 255, 0.1);
+.exam-stat-value--info {
   color: var(--color-accent);
-  border: 1px solid rgba(108, 99, 255, 0.25);
 }
 
 .exam-submitted-notice {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   color: var(--color-text-secondary);
+  margin: 0.25rem 0;
 }
 
-.exam-dev-reset {
-  margin-top: 0.5rem;
+.exam-submitted-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+/* ── Milestone 13 Report Staging Placeholder ── */
+
+.exam-report-placeholder-card {
+  max-width: 540px;
+}
+
+.exam-placeholder-notice {
+  background: rgba(108, 99, 255, 0.08);
+  border: 1px solid rgba(108, 99, 255, 0.25);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  text-align: center;
+  width: 100%;
+}
+
+.exam-placeholder-notice strong {
+  color: var(--color-text-primary);
+}
+
+/* ── Finalization / Submitting State Overlay ── */
+
+.exam-modal-card--submitting {
+  align-items: center;
+  text-align: center;
+  max-width: 380px;
+  gap: 1rem;
+  padding: 2.25rem 2rem;
+}
+
+.exam-submitting-spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid rgba(108, 99, 255, 0.2);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: examSpin 0.75s linear infinite;
+  margin-bottom: 0.25rem;
+}
+
+@keyframes examSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Palette Footer Submit Button ── */
+
+.exam-palette-footer {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.exam-palette-submit-btn {
+  width: 100%;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.45rem 0.75rem;
+  border-color: rgba(251, 191, 36, 0.35);
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.05);
+  transition: all 0.15s ease;
+}
+
+.exam-palette-submit-btn:hover {
+  background: rgba(251, 191, 36, 0.12);
+  border-color: #fbbf24;
 }
 
 /* ── Examination Sidebar (Proctoring + Palette) ── */

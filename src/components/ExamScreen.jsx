@@ -81,10 +81,21 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
   const [currentIndex, setCurrentIndex] = useState(initialSession.currentIndex);
   const [answers, setAnswers] = useState(initialSession.answers);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(initialSession.isExpired);
+  const [showReportPlaceholder, setShowReportPlaceholder] = useState(false);
+
+  // Controlled 3-phase submission state: 'active' | 'submitting' | 'submitted'
+  const [submissionState, setSubmissionState] = useState(() =>
+    initialSession.isExpired ? 'submitted' : 'active'
+  );
   const [submissionReason, setSubmissionReason] = useState(
     initialSession.isExpired ? 'timeout' : 'manual'
   );
+
+  // Synchronous ref guard preventing duplicate finalization execution
+  const submissionStateRef = useRef(initialSession.isExpired ? 'submitted' : 'active');
+  const isSubmitted = submissionState === 'submitted' || initialSession.isExpired;
+  const isSubmittedRef = useRef(isSubmitted);
+  isSubmittedRef.current = isSubmitted;
 
   // Remaining time
   const [timeRemaining, setTimeRemaining] = useState(() => {
@@ -128,7 +139,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     captureOnIntegrityEvent,
   } = useEvidenceCapture({
     videoRef: cameraVideoRef,
-    isActive: !isSubmitted,
+    isActive: submissionState === 'active',
   });
 
   // Ref to access captureOnIntegrityEvent safely inside event listeners without stale closures
@@ -139,8 +150,6 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
   const wasFullscreenActiveRef = useRef(false);
   const isFullscreenActiveRef = useRef(false);
   const isWindowFocusedRef = useRef(true);
-  const isSubmittedRef = useRef(isSubmitted);
-  isSubmittedRef.current = isSubmitted;
 
   const totalQuestions = questions.length;
   const currentQuestion = questions[currentIndex] || questions[0];
@@ -153,29 +162,39 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
   const unansweredCount = totalQuestions - answeredCount;
   const progressPercent = Math.round(((currentIndex + 1) / totalQuestions) * 100);
 
-  // Single safe submission handler
+  // Single safe submission finalization handler
   const submitExam = useCallback((reason = 'manual') => {
-    if (isSubmittedRef.current) return;
-    isSubmittedRef.current = true;
-    setShowConfirmModal(false);
-    setIsSubmitted(true);
+    // 1. Guard against duplicate invocation
+    if (submissionStateRef.current !== 'active') return;
+    submissionStateRef.current = 'submitting';
+    setSubmissionState('submitting');
     setSubmissionReason(reason);
+    setShowConfirmModal(false);
 
-    // Exit fullscreen cleanly if active
+    // 2. Exit fullscreen cleanly if active without triggering violation events
     try {
       if (typeof document !== 'undefined' && document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
     } catch (_) {}
 
+    // 3. Purge active exam session from sessionStorage
     try {
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
     } catch (_) {}
+
+    // 4. Brief deterministic finalization sequence
+    const finalizeTimer = setTimeout(() => {
+      submissionStateRef.current = 'submitted';
+      setSubmissionState('submitted');
+    }, 450);
+
+    return () => clearTimeout(finalizeTimer);
   }, []);
 
   // ── Autosave Effect ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (isSubmitted) return;
+    if (submissionState !== 'active') return;
     try {
       const payload = {
         version: 1,
@@ -187,11 +206,11 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     } catch (err) {
       console.error('Failed to autosave session:', err);
     }
-  }, [answers, currentIndex, deadlineAt, isSubmitted]);
+  }, [answers, currentIndex, deadlineAt, submissionState]);
 
   // ── Countdown Timer Effect ────────────────────────────────────────────────
   useEffect(() => {
-    if (isSubmitted) return;
+    if (submissionState !== 'active') return;
 
     const tick = () => {
       const msLeft = deadlineAt - Date.now();
@@ -209,11 +228,11 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     return () => {
       clearInterval(intervalId);
     };
-  }, [deadlineAt, isSubmitted, submitExam]);
+  }, [deadlineAt, submissionState, submitExam]);
 
   // ── Fullscreen & Window Focus Listeners ────────────────────────────────────
   useEffect(() => {
-    if (isSubmitted) return;
+    if (submissionState !== 'active') return;
 
     // Initial fullscreen request when examination starts
     try {
@@ -225,7 +244,8 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     } catch (_) {}
 
     const handleFullscreenChange = () => {
-      if (isSubmittedRef.current) return;
+      // Guard: do not record exit events during finalization or after submission
+      if (submissionStateRef.current !== 'active') return;
       const isNowFullscreen = !!document.fullscreenElement;
 
       if (isNowFullscreen) {
@@ -252,7 +272,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     };
 
     const handleBlur = () => {
-      if (isSubmittedRef.current) return;
+      if (submissionStateRef.current !== 'active') return;
       if (!isWindowFocusedRef.current) return; // Prevent duplicate blurs
       isWindowFocusedRef.current = false;
       setIsWindowFocused(false);
@@ -263,7 +283,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     };
 
     const handleFocus = () => {
-      if (isSubmittedRef.current) return;
+      if (submissionStateRef.current !== 'active') return;
       if (isWindowFocusedRef.current) return; // Prevent duplicate focuses
       isWindowFocusedRef.current = true;
       setIsWindowFocused(true);
@@ -279,7 +299,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
       window.removeEventListener('blur', handleBlur);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [isSubmitted, recordIntegrityEvent]);
+  }, [submissionState, recordIntegrityEvent]);
 
   // Request fullscreen again (user gesture)
   const handleRequestFullscreen = () => {
@@ -318,15 +338,6 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     }
   };
 
-  const handleDevReset = () => {
-    try {
-      sessionStorage.removeItem(SESSION_STORAGE_KEY);
-    } catch (_) {}
-    if (devExit) {
-      devExit();
-    }
-  };
-
   // ── Timer Urgency Styling ─────────────────────────────────────────────────
   let timerUrgencyClass = 'exam-timer--normal';
   let timerAriaUrgency = 'Normal';
@@ -341,106 +352,118 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
   // Overall monitoring state
   const isEnvironmentOptimal = isFullscreenActive && isWindowFocused;
 
-  // ── Submitted View ────────────────────────────────────────────────────────
-  if (isSubmitted) {
+  // ── Submitted / Finalized View ───────────────────────────────────────────
+  if (submissionState === 'submitted' || isSubmitted) {
+    if (showReportPlaceholder) {
+      return (
+        <div className="exam-submitted-screen">
+          <div className="exam-submitted-card exam-report-placeholder-card">
+            <header className="exam-submitted-header">
+              <div className="exam-submitted-badge">
+                <span className="exam-submitted-dot" />
+                <span>Milestone 13 Staging</span>
+              </div>
+              <h1 className="exam-title">Newton Athena</h1>
+              <h2 className="exam-submitted-title">Final Integrity Report</h2>
+              <p className="exam-submitted-lead">
+                Report preparation will be implemented in Milestone 13.
+              </p>
+            </header>
+
+            <div className="exam-placeholder-notice">
+              <p>
+                All examination telemetry, integrity events (<strong>{integrityCounts.total}</strong> recorded), and evidence snapshots (<strong>{evidenceCounts.total}</strong> captured) have been preserved in React memory for post-exam analysis.
+              </p>
+            </div>
+
+            <div className="exam-submitted-stats-grid">
+              <div className="exam-stat-box">
+                <span className="exam-stat-label">Total Integrity Events</span>
+                <span className="exam-stat-value exam-stat-value--warn">
+                  {integrityCounts.total}
+                </span>
+              </div>
+              <div className="exam-stat-box">
+                <span className="exam-stat-label">Evidence Items In Memory</span>
+                <span className="exam-stat-value exam-stat-value--info">
+                  {evidenceList.length}
+                </span>
+              </div>
+            </div>
+
+            <div className="exam-submitted-actions">
+              <button
+                type="button"
+                id="btn-back-to-summary"
+                className="btn-secondary"
+                onClick={() => setShowReportPlaceholder(false)}
+              >
+                Back to Submission Confirmation
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="exam-submitted-screen">
         <div className="exam-submitted-card">
           <header className="exam-submitted-header">
             <div className="exam-submitted-badge">
               <span className="exam-submitted-dot" />
-              <span>Session Concluded</span>
+              <span>Session Finalized</span>
             </div>
             <h1 className="exam-title">Newton Athena</h1>
             <h2 className="exam-submitted-title">Examination Submitted</h2>
             <p className="exam-submitted-lead">
               {submissionReason === 'timeout'
                 ? 'Your examination was automatically submitted as the time limit expired.'
-                : 'Your examination has been submitted successfully.'}
+                : 'Your examination has been successfully submitted.'}
             </p>
           </header>
 
-          <div className="exam-submitted-stats">
-            <div className="exam-stat-box">
-              <span className="exam-stat-label">Questions answered</span>
+          <div className="exam-submitted-stats-grid">
+            <div className="exam-stat-box" id="submitted-stat-answered">
+              <span className="exam-stat-label">Questions Answered</span>
               <span className="exam-stat-value exam-stat-value--success">
                 {answeredCount} / {totalQuestions}
               </span>
             </div>
-            <div className="exam-stat-box">
-              <span className="exam-stat-label">Questions unanswered</span>
+            <div className="exam-stat-box" id="submitted-stat-unanswered">
+              <span className="exam-stat-label">Questions Unanswered</span>
               <span className="exam-stat-value exam-stat-value--muted">
-                {unansweredCount} / {totalQuestions}
+                {unansweredCount}
               </span>
             </div>
-          </div>
-
-          {/* Environment Integrity Summary */}
-          <div className="exam-submitted-integrity-summary">
-            <div className="exam-integrity-summary-row">
-              <span className="exam-integrity-summary-label">
-                Environment integrity events recorded:
-              </span>
-              <span className="exam-integrity-summary-count">
+            <div className="exam-stat-box" id="submitted-stat-events">
+              <span className="exam-stat-label">Integrity Events</span>
+              <span className="exam-stat-value exam-stat-value--warn">
                 {integrityCounts.total}
               </span>
             </div>
-
-            {integrityCounts.total > 0 && (
-              <div className="exam-integrity-breakdown">
-                <span className="breakdown-tag breakdown-tag--warning">
-                  Warnings: {integrityCounts.warnings}
-                </span>
-                <span className="breakdown-tag breakdown-tag--info">
-                  Informational: {integrityCounts.info}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Camera Evidence Telemetry Summary */}
-          <div className="exam-submitted-evidence-summary" id="submitted-evidence-summary">
-            <div className="exam-evidence-summary-row">
-              <span className="exam-evidence-summary-label">
-                Camera evidence snapshots captured:
-              </span>
-              <span className="exam-evidence-summary-count" id="submitted-evidence-total">
+            <div className="exam-stat-box" id="submitted-stat-evidence">
+              <span className="exam-stat-label">Evidence Captured</span>
+              <span className="exam-stat-value exam-stat-value--info">
                 {evidenceCounts.total}
               </span>
             </div>
-
-            {evidenceCounts.total > 0 ? (
-              <div className="exam-evidence-breakdown">
-                <span className="breakdown-tag breakdown-tag--periodic" id="submitted-periodic-count">
-                  Periodic snapshots: {evidenceCounts.periodic}
-                </span>
-                <span className="breakdown-tag breakdown-tag--warning" id="submitted-integrity-count">
-                  Integrity-triggered: {evidenceCounts.integrity}
-                </span>
-              </div>
-            ) : (
-              <p className="exam-no-evidence-text" id="submitted-no-evidence">
-                No camera evidence was captured.
-              </p>
-            )}
           </div>
 
           <div className="exam-submitted-notice">
-            <p>Your examination session has ended.</p>
+            <p>Your examination session has been finalized.</p>
           </div>
 
-          {devExit && (
-            <div className="exam-dev-reset">
-              <button
-                type="button"
-                className="btn-secondary"
-                id="exam-dev-reset-btn"
-                onClick={handleDevReset}
-              >
-                Return to Setup (Development Prototype)
-              </button>
-            </div>
-          )}
+          <div className="exam-submitted-actions">
+            <button
+              type="button"
+              id="btn-view-integrity-report"
+              className="btn-primary"
+              onClick={() => setShowReportPlaceholder(true)}
+            >
+              View Integrity Report
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -650,7 +673,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
 
             <div className="exam-proctor-video-container">
               <MonitoringSession
-                isActive={!isSubmitted}
+                isActive={submissionState === 'active'}
                 videoRef={cameraVideoRef}
                 hideDevices={true}
                 onStatusChange={handleMonitoringStatusChange}
@@ -752,12 +775,23 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
                 <span>Unanswered</span>
               </div>
             </div>
+
+            <div className="exam-palette-footer">
+              <button
+                type="button"
+                id="exam-palette-submit-btn"
+                className="btn-secondary exam-palette-submit-btn"
+                onClick={() => setShowConfirmModal(true)}
+              >
+                Finish & Submit Exam
+              </button>
+            </div>
           </div>
         </aside>
       </div>
 
       {/* ── Submission Confirmation Dialog (Manual Submit Only) ── */}
-      {showConfirmModal && (
+      {showConfirmModal && submissionState === 'active' && (
         <div
           className="exam-modal-backdrop"
           role="dialog"
@@ -769,7 +803,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
               Submit Examination?
             </h3>
             <p className="exam-modal-lead">
-              Are you sure you want to submit your examination?
+              You have answered <strong>{answeredCount}</strong> of <strong>{totalQuestions}</strong> questions.
             </p>
 
             <div className="exam-modal-stats">
@@ -782,18 +816,16 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
               <div className="modal-stat">
                 <span className="modal-stat-label">Unanswered</span>
                 <span className="modal-stat-val modal-stat-val--warn">
-                  {unansweredCount} / {totalQuestions}
+                  {unansweredCount}
                 </span>
               </div>
             </div>
 
-            {unansweredCount > 0 && (
-              <p className="exam-modal-warn">
-                ⚠️ You have {unansweredCount} unanswered{' '}
-                {unansweredCount === 1 ? 'question' : 'questions'}. Once
-                submitted, your responses cannot be modified.
-              </p>
-            )}
+            <p className="exam-modal-warn">
+              {unansweredCount > 0
+                ? `⚠️ ${unansweredCount} ${unansweredCount === 1 ? 'question is' : 'questions are'} unanswered. Once submitted, you cannot return to the examination.`
+                : 'All questions have been answered. Once submitted, you cannot return to the examination.'}
+            </p>
 
             <div className="exam-modal-actions">
               <button
@@ -809,10 +841,28 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
                 id="modal-submit-confirm-btn"
                 className="btn-primary btn-submit-action"
                 onClick={() => submitExam('manual')}
+                disabled={submissionState !== 'active'}
               >
                 Submit Examination
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Submitting Finalization Overlay ── */}
+      {submissionState === 'submitting' && (
+        <div
+          className="exam-modal-backdrop exam-modal-backdrop--submitting"
+          role="status"
+          aria-live="assertive"
+        >
+          <div className="exam-modal-card exam-modal-card--submitting">
+            <div className="exam-submitting-spinner" aria-hidden="true" />
+            <h3 className="exam-modal-title">Submitting Examination...</h3>
+            <p className="exam-modal-lead">
+              Finalizing monitoring session...
+            </p>
           </div>
         </div>
       )}
