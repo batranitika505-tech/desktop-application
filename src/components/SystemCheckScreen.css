@@ -101,24 +101,12 @@
 .syscheck-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  justify-content: center;
+  justify-content: space-between;
   width: 100%;
 }
 
-/* Disabled button states */
-.syscheck-actions .btn-primary:disabled {
-  background: var(--color-border);
-  color: var(--color-text-secondary);
-  box-shadow: none;
-  cursor: not-allowed;
-  transform: none;
-  opacity: 0.6;
+.syscheck-actions .btn-primary,
+.syscheck-actions .btn-secondary {
+  min-width: 110px;
 }
 
-.syscheck-actions .btn-secondary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
