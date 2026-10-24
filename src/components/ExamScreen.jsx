@@ -5,6 +5,7 @@ import {
   EVENT_TYPES,
 } from '../integrity/integrityEventEngine.js';
 import MonitoringSession from './MonitoringSession.jsx';
+import IntegrityMonitoringPanel from './IntegrityMonitoringPanel.jsx';
 import { useEvidenceCapture } from '../evidence/evidenceCapture.js';
 import './ExamScreen.css';
 
@@ -109,10 +110,14 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
   // Proctoring Camera & Evidence Capture Setup
   const cameraVideoRef = useRef(null);
   const [cameraStatus, setCameraStatus] = useState('initializing');
+  const [micStatus, setMicStatus] = useState('initializing');
 
   const handleMonitoringStatusChange = useCallback((statusData) => {
     if (statusData?.cameraStatus) {
       setCameraStatus(statusData.cameraStatus);
+    }
+    if (statusData?.micStatus) {
+      setMicStatus(statusData.micStatus);
     }
   }, []);
 
@@ -682,7 +687,19 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
             )}
           </div>
 
-          {/* 2. Question Palette */}
+          {/* 2. Live Integrity Monitoring Panel */}
+          <IntegrityMonitoringPanel
+            cameraStatus={cameraStatus}
+            micStatus={micStatus}
+            isFullscreenActive={isFullscreenActive}
+            isWindowFocused={isWindowFocused}
+            integrityCounts={integrityCounts}
+            integrityEvents={integrityEvents}
+            evidenceCounts={evidenceCounts}
+            latestEvidence={latestEvidence}
+          />
+
+          {/* 3. Question Palette */}
           <div className="exam-palette-panel" aria-label="Question Navigator">
             <div className="exam-palette-header">
               <h3 className="exam-palette-title">Question Navigator</h3>

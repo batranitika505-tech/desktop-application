@@ -1,0 +1,362 @@
+/* ── IntegrityMonitoringPanel Styles ── */
+
+.imp {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+/* ── Panel Header ── */
+
+.imp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.imp-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.imp-badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-success);
+  padding: 0.15rem 0.45rem;
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  border-radius: 100px;
+}
+
+.imp-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.8);
+  animation: impPulse 2s infinite ease-in-out;
+}
+
+@keyframes impPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+/* ── Section ── */
+
+.imp-section {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.imp-section:last-child {
+  border-bottom: none;
+}
+
+.imp-section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+  margin: 0 0 0.55rem 0;
+}
+
+/* ── Status Grid ── */
+
+.imp-status-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.imp-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.55rem;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 5px;
+  transition: background 0.15s ease;
+}
+
+.imp-status-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.imp-status-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.imp-badge--active {
+  background: rgba(52, 211, 153, 0.1);
+  color: var(--color-success);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+.imp-badge--warn {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+/* ── Integrity Summary ── */
+
+.imp-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
+}
+
+.imp-summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.45rem 0.2rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 5px;
+}
+
+.imp-summary-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  line-height: 1.1;
+}
+
+.imp-summary-label {
+  font-size: 0.56rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.imp-summary-item--warning .imp-summary-value {
+  color: #fbbf24;
+}
+
+.imp-summary-item--info .imp-summary-value {
+  color: var(--color-accent);
+}
+
+.imp-summary-item--critical .imp-summary-value {
+  color: #f87171;
+}
+
+/* ── Evidence Summary ── */
+
+.imp-evidence-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.imp-evidence-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 0.55rem;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 5px;
+}
+
+.imp-evidence-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.imp-evidence-value {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.imp-evidence-value--time {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* ── Recent Events Timeline ── */
+
+.imp-no-events {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+  text-align: center;
+  padding: 0.4rem 0;
+}
+
+.imp-event-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.imp-event-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.45rem 0.55rem;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 5px;
+  border-left: 3px solid var(--color-border);
+  transition: background 0.12s ease, border-color 0.12s ease;
+  outline: none;
+}
+
+.imp-event-item:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.imp-event-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.imp-event-type-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+}
+
+.imp-event-type--warning {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.imp-event-type--info {
+  background: rgba(108, 99, 255, 0.1);
+  color: var(--color-accent);
+  border: 1px solid rgba(108, 99, 255, 0.25);
+}
+
+.imp-event-type--critical {
+  background: rgba(248, 113, 113, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.imp-event-time {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.imp-event-bottom {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+}
+
+.imp-severity-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.imp-severity-dot--warning {
+  background: #fbbf24;
+  box-shadow: 0 0 4px rgba(251, 191, 36, 0.5);
+}
+
+.imp-severity-dot--info {
+  background: var(--color-accent);
+  box-shadow: 0 0 4px rgba(108, 99, 255, 0.5);
+}
+
+.imp-severity-dot--critical {
+  background: #f87171;
+  box-shadow: 0 0 4px rgba(248, 113, 113, 0.5);
+}
+
+.imp-event-desc {
+  color: var(--color-text-secondary);
+  flex: 1;
+  line-height: 1.3;
+}
+
+.imp-severity-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.imp-severity-label--warning {
+  color: #fbbf24;
+}
+
+.imp-severity-label--info {
+  color: var(--color-accent);
+}
+
+.imp-severity-label--critical {
+  color: #f87171;
+}
+
+/* ── Border accents for event severity ── */
+
+.imp-event-item--warning {
+  border-left-color: #fbbf24;
+}
+
+.imp-event-item--info {
+  border-left-color: var(--color-accent);
+}
+
+.imp-event-item--critical {
+  border-left-color: #f87171;
+}
