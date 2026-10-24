@@ -6,6 +6,7 @@ import {
 } from '../integrity/integrityEventEngine.js';
 import MonitoringSession from './MonitoringSession.jsx';
 import IntegrityMonitoringPanel from './IntegrityMonitoringPanel.jsx';
+import IntegrityReportScreen from './IntegrityReportScreen.jsx';
 import { useEvidenceCapture } from '../evidence/evidenceCapture.js';
 import './ExamScreen.css';
 
@@ -81,7 +82,11 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
   const [currentIndex, setCurrentIndex] = useState(initialSession.currentIndex);
   const [answers, setAnswers] = useState(initialSession.answers);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showReportPlaceholder, setShowReportPlaceholder] = useState(false);
+  const [showReportScreen, setShowReportScreen] = useState(false);
+  const [sessionStartTime] = useState(() => deadlineAt - EXAM_DURATION_SECONDS * 1000);
+  const [submissionTime, setSubmissionTime] = useState(() =>
+    initialSession.isExpired ? new Date().toISOString() : null
+  );
 
   // Controlled 3-phase submission state: 'active' | 'submitting' | 'submitted'
   const [submissionState, setSubmissionState] = useState(() =>
@@ -169,6 +174,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
     submissionStateRef.current = 'submitting';
     setSubmissionState('submitting');
     setSubmissionReason(reason);
+    setSubmissionTime(new Date().toISOString());
     setShowConfirmModal(false);
 
     // 2. Exit fullscreen cleanly if active without triggering violation events
@@ -354,55 +360,20 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
 
   // ── Submitted / Finalized View ───────────────────────────────────────────
   if (submissionState === 'submitted' || isSubmitted) {
-    if (showReportPlaceholder) {
+    if (showReportScreen) {
       return (
-        <div className="exam-submitted-screen">
-          <div className="exam-submitted-card exam-report-placeholder-card">
-            <header className="exam-submitted-header">
-              <div className="exam-submitted-badge">
-                <span className="exam-submitted-dot" />
-                <span>Milestone 13 Staging</span>
-              </div>
-              <h1 className="exam-title">Newton Athena</h1>
-              <h2 className="exam-submitted-title">Final Integrity Report</h2>
-              <p className="exam-submitted-lead">
-                Report preparation will be implemented in Milestone 13.
-              </p>
-            </header>
-
-            <div className="exam-placeholder-notice">
-              <p>
-                All examination telemetry, integrity events (<strong>{integrityCounts.total}</strong> recorded), and evidence snapshots (<strong>{evidenceCounts.total}</strong> captured) have been preserved in React memory for post-exam analysis.
-              </p>
-            </div>
-
-            <div className="exam-submitted-stats-grid">
-              <div className="exam-stat-box">
-                <span className="exam-stat-label">Total Integrity Events</span>
-                <span className="exam-stat-value exam-stat-value--warn">
-                  {integrityCounts.total}
-                </span>
-              </div>
-              <div className="exam-stat-box">
-                <span className="exam-stat-label">Evidence Items In Memory</span>
-                <span className="exam-stat-value exam-stat-value--info">
-                  {evidenceList.length}
-                </span>
-              </div>
-            </div>
-
-            <div className="exam-submitted-actions">
-              <button
-                type="button"
-                id="btn-back-to-summary"
-                className="btn-secondary"
-                onClick={() => setShowReportPlaceholder(false)}
-              >
-                Back to Submission Confirmation
-              </button>
-            </div>
-          </div>
-        </div>
+        <IntegrityReportScreen
+          answers={answers}
+          questions={questions}
+          integrityEvents={integrityEvents}
+          evidenceList={evidenceList}
+          sessionStartTime={sessionStartTime}
+          submissionTime={submissionTime || new Date().toISOString()}
+          submissionReason={submissionReason}
+          cameraStatus={cameraStatus}
+          micStatus={micStatus}
+          onBackToSummary={() => setShowReportScreen(false)}
+        />
       );
     }
 
@@ -459,7 +430,7 @@ function ExamScreen({ onBackToSetup, onBackToInstructions }) {
               type="button"
               id="btn-view-integrity-report"
               className="btn-primary"
-              onClick={() => setShowReportPlaceholder(true)}
+              onClick={() => setShowReportScreen(true)}
             >
               View Integrity Report
             </button>
