@@ -733,6 +733,7 @@
 
 .rep-timeline-id-tag code {
   color: var(--color-text-secondary);
+  word-break: break-all;
 }
 
 /* ── Empty State ── */
@@ -864,6 +865,7 @@
 
 .rep-field-val code {
   color: var(--color-accent);
+  word-break: break-all;
 }
 
 /* ── Responsive Adaptations ── */

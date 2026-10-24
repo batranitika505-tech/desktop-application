@@ -794,28 +794,6 @@
   margin-top: 0.25rem;
 }
 
-/* ── Milestone 13 Report Staging Placeholder ── */
-
-.exam-report-placeholder-card {
-  max-width: 540px;
-}
-
-.exam-placeholder-notice {
-  background: rgba(108, 99, 255, 0.08);
-  border: 1px solid rgba(108, 99, 255, 0.25);
-  border-radius: var(--radius);
-  padding: 1rem 1.25rem;
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  text-align: center;
-  width: 100%;
-}
-
-.exam-placeholder-notice strong {
-  color: var(--color-text-primary);
-}
-
 /* ── Finalization / Submitting State Overlay ── */
 
 .exam-modal-card--submitting {

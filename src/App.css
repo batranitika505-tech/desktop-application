@@ -43,3 +43,15 @@
 .btn-secondary:active {
   transform: scale(0.98);
 }
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-primary[disabled],
+.btn-secondary[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none;
+  box-shadow: none;
+}
+

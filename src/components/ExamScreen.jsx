@@ -72,9 +72,7 @@ function getInitialExamSession() {
 
 // ── Component ──────────────────────────────────────────────────────────────
 
-function ExamScreen({ onBackToSetup, onBackToInstructions }) {
-  const devExit = onBackToSetup || onBackToInstructions;
-
+function ExamScreen() {
   // Restore or initialize session state once on mount
   const [initialSession] = useState(getInitialExamSession);
   const deadlineAt = initialSession.deadlineAt;

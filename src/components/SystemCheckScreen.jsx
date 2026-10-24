@@ -118,7 +118,6 @@ function SystemCheckScreen({ onBack, onContinue }) {
   const [camera, setCamera] = useState(IDLE);
   const [mic, setMic] = useState(IDLE);
   const [isRunning, setIsRunning] = useState(false);
-  const [continuePlaceholder, setContinuePlaceholder] = useState(false);
 
   // Derived states
   const permissions = derivePermissions(camera, mic);
@@ -131,7 +130,6 @@ function SystemCheckScreen({ onBack, onContinue }) {
   const runChecks = useCallback(async () => {
     if (isRunning) return;
     setIsRunning(true);
-    setContinuePlaceholder(false);
 
     // Transition devices to checking
     setCamera({ state: 'checking', badgeText: 'Checking...', detail: null });
@@ -185,8 +183,7 @@ function SystemCheckScreen({ onBack, onContinue }) {
   }, [isRunning]);
 
   const handleContinue = () => {
-    if (!allReady) return;
-    setContinuePlaceholder(true);
+    if (!allReady || isRunning) return;
     if (onContinue) {
       onContinue();
     }
@@ -223,13 +220,6 @@ function SystemCheckScreen({ onBack, onContinue }) {
           <span className="syscheck-overall-label">System status:</span>
           <span className="syscheck-overall-value">{overallLabel}</span>
         </div>
-
-        {/* ── Placeholder feedback if continue is clicked ── */}
-        {continuePlaceholder && (
-          <div className="syscheck-placeholder-alert" role="status">
-            ✓ Readiness verified. Examination launch flow will be initialized in the next milestone.
-          </div>
-        )}
 
         {/* ── Actions ── */}
         <div className="syscheck-actions">

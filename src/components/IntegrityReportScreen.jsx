@@ -576,6 +576,13 @@ function IntegrityReportScreen({
           role="dialog"
           aria-modal="true"
           aria-labelledby="lightbox-title"
+          tabIndex={-1}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.stopPropagation();
+              setSelectedEvidence(null);
+            }
+          }}
           onClick={() => setSelectedEvidence(null)}
         >
           <div
@@ -590,6 +597,7 @@ function IntegrityReportScreen({
                 type="button"
                 id="btn-lightbox-close"
                 className="btn-secondary rep-lightbox-close"
+                autoFocus
                 onClick={() => setSelectedEvidence(null)}
                 aria-label="Close evidence preview"
               >

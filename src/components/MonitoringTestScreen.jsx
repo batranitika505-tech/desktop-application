@@ -45,7 +45,7 @@ function MonitoringTestScreen({ onBack, onContinue }) {
       <div className="mon-test-content">
         {/* ── Screen Header ── */}
         <header className="mon-test-header">
-          <div className="mon-test-pill">Development Verification Screen</div>
+          <div className="mon-test-pill">Device Readiness Check</div>
           <h1 className="mon-test-title">Newton Athena</h1>
           <p className="mon-test-subtitle">Monitoring Session</p>
         </header>
