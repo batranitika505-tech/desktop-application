@@ -1,6 +1,6 @@
 {
   "name": "newton-athena",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "AI-Assisted Examination Integrity System",
   "private": true,
   "main": "electron/main.cjs",
@@ -10,7 +10,35 @@
     "preview": "vite preview",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "vite build && electron-builder",
-    "electron:start": "electron ."
+    "electron:start": "electron .",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.newton.athena",
+    "productName": "Newton Athena",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "dist/index.html",
+      "dist/assets/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.education",
+      "extendInfo": {
+        "NSCameraUsageDescription": "Newton Athena requires camera access to monitor examination integrity.",
+        "NSMicrophoneUsageDescription": "Newton Athena requires microphone access to monitor examination integrity."
+      }
+    },
+    "dmg": {
+      "title": "Newton Athena"
+    }
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -20,6 +48,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.2",
     "electron": "^33.3.1",
+    "electron-builder": "^26.18.0",
     "vite": "^6.0.7",
     "wait-on": "^8.0.3"
   }
