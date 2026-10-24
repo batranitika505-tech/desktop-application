@@ -31,6 +31,9 @@
         "zip"
       ],
       "category": "public.app-category.education",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
       "extendInfo": {
         "NSCameraUsageDescription": "Newton Athena requires camera access to monitor examination integrity.",
         "NSMicrophoneUsageDescription": "Newton Athena requires microphone access to monitor examination integrity."
